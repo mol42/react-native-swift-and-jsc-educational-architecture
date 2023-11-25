@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		D04F7BBD2B11EE2C00CE5375 /* RNExampleBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = D04F7BBC2B11EE2C00CE5375 /* RNExampleBridge.swift */; };
+		D04F7BBF2B12834500CE5375 /* RNViewSurface.swift in Sources */ = {isa = PBXBuildFile; fileRef = D04F7BBE2B12834500CE5375 /* RNViewSurface.swift */; };
 		D069A1B32B11E4AE0057D692 /* ReactNativeBasicsApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D069A1B22B11E4AE0057D692 /* ReactNativeBasicsApp.swift */; };
 		D069A1B52B11E4AE0057D692 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D069A1B42B11E4AE0057D692 /* ContentView.swift */; };
 		D069A1B72B11E4B10057D692 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D069A1B62B11E4B10057D692 /* Assets.xcassets */; };
@@ -17,6 +18,7 @@
 
 /* Begin PBXFileReference section */
 		D04F7BBC2B11EE2C00CE5375 /* RNExampleBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RNExampleBridge.swift; sourceTree = "<group>"; };
+		D04F7BBE2B12834500CE5375 /* RNViewSurface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RNViewSurface.swift; sourceTree = "<group>"; };
 		D069A1AF2B11E4AE0057D692 /* ReactNativeBasics.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ReactNativeBasics.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D069A1B22B11E4AE0057D692 /* ReactNativeBasicsApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReactNativeBasicsApp.swift; sourceTree = "<group>"; };
 		D069A1B42B11E4AE0057D692 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -61,6 +63,7 @@
 				D069A1B82B11E4B10057D692 /* Preview Content */,
 				D069A1C22B11E9290057D692 /* index.js */,
 				D04F7BBC2B11EE2C00CE5375 /* RNExampleBridge.swift */,
+				D04F7BBE2B12834500CE5375 /* RNViewSurface.swift */,
 			);
 			path = ReactNativeBasics;
 			sourceTree = "<group>";
@@ -146,6 +149,7 @@
 			files = (
 				D069A1B52B11E4AE0057D692 /* ContentView.swift in Sources */,
 				D069A1B32B11E4AE0057D692 /* ReactNativeBasicsApp.swift in Sources */,
+				D04F7BBF2B12834500CE5375 /* RNViewSurface.swift in Sources */,
 				D04F7BBD2B11EE2C00CE5375 /* RNExampleBridge.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

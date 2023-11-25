@@ -11,6 +11,7 @@ import JavaScriptCore
 @main
 struct ReactNativeBasicsApp: App {
     var jsContext: JSContext;
+    var bridgeInstance: RNExampleBridge
     
     init() {
         let context = JSContext()
@@ -30,14 +31,14 @@ struct ReactNativeBasicsApp: App {
         
         context?.setObject(RNExampleBridge.self, forKeyedSubscript: "RNExampleBridge" as (NSCopying & NSObjectProtocol))
         
-        context?.evaluateScript("RenderButton()")
-        
         self.jsContext = context!
+        self.bridgeInstance = RNExampleBridge.shared;
+        self.bridgeInstance.jsContext = context;
     }
     
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            RNViewSurface(jsContext: jsContext, bridgeInstance: bridgeInstance)
         }
     }
 }

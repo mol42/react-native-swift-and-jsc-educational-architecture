@@ -4,28 +4,41 @@
 //
 //  Created by Typhoon Y on 11/25/23.
 //
-
+import SwiftUI
 import Foundation
 import JavaScriptCore
 
+var emptyFunction: () -> String = { return "" }
+
 @objc protocol RNJSExports: JSExport {
-   func greet() -> String
-   func greetMe(_ name: String) -> String
-   static func getInstance() -> RNExampleBridge
-   //any other properties you may want to export to JS runtime
-   //var greetings: String {get set}
+    func clearViewList()
+    func updateViewList(_ newView: JSValue)
+    static func getInstance() -> RNExampleBridge
 }
 
 class RNExampleBridge: NSObject, RNJSExports {
-    public func greet() -> String {
-      return "Hello World from Swift!"
+    static let shared = RNExampleBridge()
+    var viewList: [String] = []
+    var jsContext: JSContext?
+    
+    override init() {
+        self.jsContext = nil
     }
-
-    public func greetMe(_ name: String) -> String {
-      return "Hello, " + name + "!"
+    
+    public func clearViewList() {
+        print("SWIFT: RNExampleBridge.clearViewList")
+        self.viewList = []
+    }
+    
+    public func updateViewList(_ newView: JSValue) {
+        print("---------------")
+        print("SWIFT: RNExampleBridge.updateViewList")
+        print(newView.toString())
+        print("---------------")
+        self.viewList.append(newView.toString())
     }
     
     class func getInstance() -> RNExampleBridge {
-      return RNExampleBridge()
+      return shared
     }
 }

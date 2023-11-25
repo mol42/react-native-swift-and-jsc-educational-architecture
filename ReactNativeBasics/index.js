@@ -11,11 +11,34 @@ var console = { log: function(message) {
   }
 }}
 
-function RenderButton() {
-    console.log("Hello World from RenderButton!")
-    //
-    const instance = RNExampleBridge.getInstance()
-    console.log(instance?.greet())
+const RenderTree = []
+
+function CreateReacNativeTree() {
+    console.log("CreateReacNativeTree on JS")
+
+    RenderTree.push("Test Button");
+    
+    console.log(JSON.stringify(RenderTree))
+    
+    requestNativeRender();
+}
+
+function HandleButtonClickEvent() {
+    console.log("HandleButtonClickEvent on JS")
+    RenderTree[0] = "Test Button Clicked"
+    
+    requestNativeRender();
+}
+
+function requestNativeRender() {
+    const bridge = RNExampleBridge.getInstance()
+    
+    bridge.clearViewList()
+    
+    for (let i = 0; i < RenderTree.length; i++) {
+        console.log("updateViewList on JS", RenderTree[i])
+        bridge.updateViewList(RenderTree[i]);
+    }
 }
 
 console.log("Hello World from JS!!!")
