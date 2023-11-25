@@ -24,6 +24,7 @@ class RNExampleBridge: NSObject, RNJSExports {
     public func greetMe(_ name: String) -> String {
       return "Hello, " + name + "!"
     }
+    
     class func getInstance() -> RNExampleBridge {
       return RNExampleBridge()
     }
