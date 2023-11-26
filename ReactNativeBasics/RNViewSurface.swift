@@ -38,7 +38,7 @@ struct RNViewSurface: View {
         }
         .padding()
         .onAppear {
-            jsContext?.evaluateScript("CreateReacNativeTree()")
+            jsContext?.evaluateScript("RenderJSApp()")
             
             syncViewState()
         }

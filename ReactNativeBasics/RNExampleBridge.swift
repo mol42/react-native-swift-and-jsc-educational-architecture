@@ -32,7 +32,9 @@ class RNExampleBridge: NSObject, RNJSExports {
     }
     
     public func resetNativeRenderTree() {
+        print("---------------")
         print("SWIFT: RNExampleBridge.resetNativeRenderTree")
+        print("---------------")
         self.nativeRenderTree = []
     }
     

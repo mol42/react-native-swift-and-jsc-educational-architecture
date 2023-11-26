@@ -96,7 +96,7 @@ class SimpleReactNativeEngine {
 
 const simpleReactNativeEngineInstance = new SimpleReactNativeEngine();
 
-function CreateReacNativeTree() {
+function RenderJSApp() {
     console.log("JS: CreateReacNativeTree on JS");
     
     simpleReactNativeEngineInstance.initRenderTree();
