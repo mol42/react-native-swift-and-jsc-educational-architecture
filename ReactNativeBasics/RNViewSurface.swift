@@ -10,7 +10,7 @@ import SwiftUI
 import JavaScriptCore
 
 struct RNViewSurface: View {
-    @State private var viewList: [String] = []
+    @State private var renderTree: [RenderElement] = []
     var jsContext: JSContext?
     var bridgeInstance: RNExampleBridge?
     
@@ -22,14 +22,18 @@ struct RNViewSurface: View {
             
             Text("Test")
             
-            List($viewList, id: \.self) { (viewType: Binding<String>) in
-                Button(action: {
-                    jsContext?.evaluateScript("HandleButtonClickEvent()")
-                    
-                    syncViewState()
-                }, label: {
-                    Text(viewType.wrappedValue)
-                })
+            List($renderTree, id: \.self) { (treeElement: Binding<RenderElement>) in
+                if (treeElement.wrappedValue.type == "Button") {
+                    Button(action: {
+                        jsContext?.evaluateScript("HandleButtonClickEvent(" + treeElement.wrappedValue.id + ")")
+                        
+                        syncViewState()
+                    }, label: {
+                        Text(treeElement.wrappedValue.data)
+                    })
+                } else {
+                    Text(treeElement.wrappedValue.data)
+                }
             }
         }
         .padding()
@@ -44,10 +48,10 @@ struct RNViewSurface: View {
      This state sync triggers render since the state will change so it is a double featured function
      */
     func syncViewState() {
-        viewList.removeAll()
+        renderTree.removeAll()
         
-        bridgeInstance?.viewList.forEach({ viewType in
-            viewList.append(viewType)
+        bridgeInstance?.nativeRenderTree.forEach({ treeElement in
+            renderTree.append(treeElement)
         })
     }
 }
