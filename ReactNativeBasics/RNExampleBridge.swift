@@ -41,10 +41,10 @@ class RNExampleBridge: NSObject, RNJSExports {
         print("SWIFT: RNExampleBridge.addToNativeRenderTree")
         print(elementType.toString())
         print(data.toString())
-        print("---------------")
         var element = RenderElement(id: id.toString(), type: elementType.toString(), data: data.toString())
         print("SWIFT: element.data")
         print(element.data);
+        print("---------------")
         self.nativeRenderTree.append(element)
     }
     
