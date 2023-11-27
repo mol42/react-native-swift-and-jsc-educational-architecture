@@ -41,11 +41,9 @@ class RNExampleBridge: NSObject, RNJSExports {
     public func addToNativeRenderTree(_ elementType: JSValue,_ id: JSValue,_ data: JSValue) {
         print("---------------")
         print("SWIFT: RNExampleBridge.addToNativeRenderTree")
-        print(elementType.toString())
-        print(data.toString())
         var element = RenderElement(id: id.toString(), type: elementType.toString(), data: data.toString())
-        print("SWIFT: element.data")
-        print(element.data);
+        print("SWIFT: element.type: " + element.type)
+        print("SWIFT: element.data: " + element.data)
         print("---------------")
         self.nativeRenderTree.append(element)
     }

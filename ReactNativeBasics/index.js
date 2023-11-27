@@ -53,6 +53,8 @@ class SimpleReactNativeEngine {
         }
     }
     
+    // for this demo architecture we assume that the event
+    // is click event..
     invokeEventForTheElement(elementId) {
         console.log("JS: SimpleReactNative.invokeEventForTheElement " + elementId);
         const targetElement = this.findElementById(elementId);
@@ -101,6 +103,7 @@ function RenderJSApp() {
     
     simpleReactNativeEngineInstance.initRenderTree();
     
+    // Create the first button element
     simpleReactNativeEngineInstance.createElement("Button", "Test Button", {clickCount: 0}, (targetElement) => {
         targetElement.state.clickCount += 1;
         targetElement.data = `Test Button 1 Clicked (${targetElement.state.clickCount})`;
@@ -110,8 +113,10 @@ function RenderJSApp() {
         }
     });
     
+    // Create the text element
     const textElement = simpleReactNativeEngineInstance.createElement("Text", "Test Text", null, null);
     
+    // Create the last button element
     simpleReactNativeEngineInstance.createElement("Button", "Test Button", {clickCount: 0}, (targetElement) => {
         targetElement.state.clickCount += 1;
         targetElement.data = `Test Button 2 Clicked (${targetElement.state.clickCount})`;
@@ -136,7 +141,8 @@ function HandleButtonClickEvent(elementId) {
 }
 
 function requestNativeRender() {
-    const nativeBridge = RNExampleBridge.getInstance(); // Not JSON based bridge!
+    // This is not JSON based bridge!
+    const nativeBridge = RNExampleBridge.getInstance();
     const renderTree = simpleReactNativeEngineInstance.getRenderTree();
     
     // Start informing UI about the changes
