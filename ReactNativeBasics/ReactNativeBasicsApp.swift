@@ -16,6 +16,10 @@ struct ReactNativeBasicsApp: App {
     init() {
         let context = JSContext()
 
+        context?.exceptionHandler = { context, exception in
+            print("JS Error: \(exception!)") // Do not use force unwrap `!`
+        }
+        
         let consoleLog: @convention(block) (String) -> Void = {message in
           print(message)
         }

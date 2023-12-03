@@ -10,10 +10,22 @@ import JavaScriptCore
 
 var emptyFunction: () -> String = { return "" }
 
-struct RenderElement: Hashable {
+struct RenderElement: Hashable, Equatable {
+    var identifier: String {
+        return UUID().uuidString
+    }
+    
+    public func hash(into hasher: inout Hasher) {
+        return hasher.combine(identifier)
+    }
+    
+    public static func == (lhs: RenderElement, rhs: RenderElement) -> Bool {
+        return lhs.identifier == rhs.identifier
+    }
+    
     var id: String;
     var type: String;
-    var data: String;
+    var props: Dictionary<AnyHashable, Any>;
 }
 
 @objc protocol RNJSExports: JSExport {
@@ -38,12 +50,12 @@ class RNExampleBridge: NSObject, RNJSExports {
         self.nativeRenderTree = []
     }
     
-    public func addToNativeRenderTree(_ elementType: JSValue,_ id: JSValue,_ data: JSValue) {
+    public func addToNativeRenderTree(_ elementType: JSValue,_ id: JSValue,_ props: JSValue) {
         print("---------------")
         print("SWIFT: RNExampleBridge.addToNativeRenderTree")
-        var element = RenderElement(id: id.toString(), type: elementType.toString(), data: data.toString())
+        var element = RenderElement(id: id.toString(), type: elementType.toString(), props: props.toDictionary())
         print("SWIFT: element.type: " + element.type)
-        print("SWIFT: element.data: " + element.data)
+        print("SWIFT: element.data: " + element.props.keys.description)
         print("---------------")
         self.nativeRenderTree.append(element)
     }

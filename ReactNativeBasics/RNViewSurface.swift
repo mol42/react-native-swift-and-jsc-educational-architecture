@@ -15,24 +15,24 @@ struct RNViewSurface: View {
     var bridgeInstance: RNExampleBridge?
     
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundColor(.accentColor)
-            
-            Text("Test")
-            
-            List($renderTree, id: \.self) { (treeElement: Binding<RenderElement>) in
+        VStack (alignment: .leading) {
+            ForEach($renderTree, id: \.self) { (treeElement: Binding<RenderElement>) in
+                
+                var log1 = print("treeElement.wrappedValue.type");
+                var log2 = print(treeElement.wrappedValue.type);
+                
                 if (treeElement.wrappedValue.type == "Button") {
                     Button(action: {
                         jsContext?.evaluateScript("HandleButtonClickEvent(" + treeElement.wrappedValue.id + ")")
                         
                         syncViewState()
                     }, label: {
-                        Text(treeElement.wrappedValue.data)
+                        let labelText: String = treeElement.wrappedValue.props["__innerHTML"] as! String;
+                        Text(labelText)
                     })
-                } else {
-                    Text(treeElement.wrappedValue.data)
+                } else if (treeElement.wrappedValue.type == "Label") {
+                    let labelText: String = treeElement.wrappedValue.props["__innerHTML"] as! String;
+                    Text(labelText)
                 }
             }
         }
