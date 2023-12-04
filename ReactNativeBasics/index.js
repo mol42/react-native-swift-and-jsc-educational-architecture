@@ -1,3 +1,5 @@
+/*****************************************************************************************************/
+/* React Native helper method initialization **/
 function isObject(val) {
     if (val === null) {
         return false;
@@ -14,6 +16,8 @@ var console = {
         }
     }
 }
+
+/*****************************************************************************************************/
 
 /**  simple.react.js START */
 const ReactInnerContext = {
@@ -34,17 +38,11 @@ function resetReactContext() {
 }
 
 function requestReRender(elementId) {
-    
     resetReactContext();
-    
     const existingDomTree = ReactInnerContext.virtualDomTree;
     // our framework expects function that creates the
     // virtual dom tree
     const newVirtualDomTree = createElement(existingDomTree.type);
-    console.log("--------")
-    console.log("newVirtualDomTree");
-    console.log(JSON.stringify(newVirtualDomTree))
-    console.log("--------")
     renderVirtualDom(newVirtualDomTree, ReactInnerContext.rootDOMElement, true);
 }
 
@@ -65,18 +63,16 @@ function createOrGetMap(map, activeElementId) {
 
 function useState(initialState) {
     const { $$id, $$parentId } = ReactInnerContext.activeStateParent;
+    const { hookIdMap, stateMap } = ReactInnerContext;
     const activeStateId = $$parentId || "NULL";
-    const [hookIdMapAlreadyCreated, activeHookIdMap] = createOrGetMap(ReactInnerContext.hookIdMap, activeStateId);
-    const [activeStateMapAlreadyCreated, activeStateMap] = createOrGetMap(ReactInnerContext.stateMap, activeStateId);
+    const [hookIdMapAlreadyCreated, activeHookIdMap] = createOrGetMap(hookIdMap, activeStateId);
+    const [activeStateMapAlreadyCreated, activeStateMap] = createOrGetMap(stateMap, activeStateId);
     
     if (!hookIdMapAlreadyCreated) {
         activeHookIdMap["id"] = 0;
     }
-    const activeHookId = activeHookIdMap["id"]++;
     
-    console.log("$$id, $$parentId: " + $$id + ", " + $$parentId);
-    console.log("activeStateMapAlreadyCreated:" + activeStateMapAlreadyCreated);
-    console.log("activeStateMap[activeHookId]:" + activeStateMap[activeHookId]);
+    const activeHookId = activeHookIdMap["id"]++;
     
     if (!activeStateMapAlreadyCreated && !hookIdMapAlreadyCreated) {
         activeStateMap[activeHookId] = initialState;
@@ -87,15 +83,12 @@ function useState(initialState) {
     }
 
     const stateUpdater = function(newState) {
-        console.log("activeStateMap[activeHookId]: " + activeStateMap[activeHookId] + " newState: " + newState)
         activeStateMap[activeHookId] = newState;
         requestReRender(activeStateId);
         setTimeout(function() {
             requestReRender($$parentId, $$id);
         }, 20);
     };
-    
-    console.log("activeStateMap: " + JSON.stringify(activeStateMap));
 
     return [activeStateMap[activeHookId], stateUpdater];
 }
@@ -149,8 +142,6 @@ function renderVirtualDom(virtualDomTree, rootDOMElement, replacePreviousRoot) {
 function createRoot(rootDOMElement) {
     return {
         render: function(virtualDomTree) {
-            console.log("virtualDomTree");
-            console.log(JSON.stringify(virtualDomTree));
             resetReactContext();
             renderVirtualDom(virtualDomTree, rootDOMElement);
         }
@@ -194,6 +185,7 @@ function __registerRootRenderer(rootRenderer) {
 }
 
 /**  simple.react.js END */
+/*****************************************************************************************************/
 /** React Native Renderer START */
 const ReactRenderContext = {};
 
@@ -236,12 +228,7 @@ function syncSingleNodeToNative(singleNode) {
 }
 
 function __handleButtonClickEvent(elementId) {
-    console.log("JS: HandleButtonClickEvent on JS");
-    console.log("JS: elementId: " + elementId);
-
     __informNativeEvent(elementId, "click");
-
-    // requestReRender(elementId);
 }
 
 __registerRootRenderer(doRenderRoot);
@@ -274,9 +261,6 @@ function App() {
           labelItems.push(renderedElement);
       }
   }
-    
-    console.log("labelCount: " + labelCount)
-    console.log("labelItems: " + JSON.stringify(labelItems))
     
   return createElement(
     "Button",
