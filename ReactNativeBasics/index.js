@@ -1,157 +1,286 @@
+/*****************************************************************************************************/
+/* React Native helper method initialization **/
 function isObject(val) {
-  if (val === null) { return false;}
-  return ( (typeof val === 'function') || (typeof val === 'object') );
+    if (val === null) {
+        return false;
+    }
+    return ((typeof val === 'function') || (typeof val === 'object'));
 }
 
-var console = { log: function(message) {
-  if (isObject(message)) {
-    _consoleLog(JSON.stringify(message, null, '\t'));
-  } else {
-    _consoleLog(message);
-  }
-}}
-
-class SimpleReactNativeEngine {
-    
-    constructor() {
-        this.renderTree = []
-    }
-    
-    getRenderTree() {
-        return this.renderTree;
-    }
-    
-    initRenderTree() {
-        this.renderTree = []
-    }
-    
-    resetRenderTree() {
-        this.renderTree = []
-    }
-    
-    createElement(type, data, state, callback) {
-        console.log("JS: SimpleReactNative.createElement");
-        
-        const element = {
-            id: String(this.renderTree.length + 1), // for both sides
-            state, // for the JS side
-            type, // for the native side
-            data, // for the native side
-            callback // JS side
-        };
-        
-        this.renderTree.push(element);
-        
-        return element;
-    }
-    
-    removeElement(elementId) {
-        const elementIndex = this.findElementIndexById(elementId);
-        
-        if (elementIndex > -1) {
-            this.renderTree.splice(elementIndex, 1);
+var console = {
+    log: function(message) {
+        if (isObject(message)) {
+            _consoleLog(JSON.stringify(message, null, '\t'));
+        } else {
+            _consoleLog(message);
         }
     }
+}
+
+/*****************************************************************************************************/
+
+/**  simple.react.js START */
+const ReactInnerContext = {
+    elementId: 0,
+    activeId: null,
+    stateMap: {},
+    hookIdMap: {},
+    activeTreeNode: null,
+    virtualDomTree: null
+};
+
+const Fragment = "fragment";
+
+function resetReactContext() {
+    ReactInnerContext.elementId = 0;
+    ReactInnerContext.hookIdMap = {};
+    ReactInnerContext.activeStateParent = null;
+}
+
+function requestReRender(elementId) {
+    resetReactContext();
+    const existingDomTree = ReactInnerContext.virtualDomTree;
+    // our framework expects function that creates the
+    // virtual dom tree
+    const newVirtualDomTree = createElement(existingDomTree.type);
+    renderVirtualDom(newVirtualDomTree, ReactInnerContext.rootDOMElement, true);
+}
+
+function createOrGetMap(map, activeElementId) {
+    const resultArray = [];
+
+    if (typeof map[activeElementId] === "undefined") {
+        map[activeElementId] = {};
+        resultArray.push(false);
+    } else {
+        resultArray.push(true);
+    }
+
+    resultArray.push(map[activeElementId]);
+
+    return resultArray;
+}
+
+function useState(initialState) {
+    const { $$id, $$parentId } = ReactInnerContext.activeStateParent;
+    const { hookIdMap, stateMap } = ReactInnerContext;
+    const activeStateId = $$parentId || "NULL";
+    const [hookIdMapAlreadyCreated, activeHookIdMap] = createOrGetMap(hookIdMap, activeStateId);
+    const [activeStateMapAlreadyCreated, activeStateMap] = createOrGetMap(stateMap, activeStateId);
     
-    // for this demo architecture we assume that the event
-    // is click event..
-    invokeEventForTheElement(elementId) {
-        console.log("JS: SimpleReactNative.invokeEventForTheElement " + elementId);
-        const targetElement = this.findElementById(elementId);
-        
-        if (targetElement) {
-            const callback = targetElement.callback;
-            
-            if (callback) {
-                callback(targetElement);
+    if (!hookIdMapAlreadyCreated) {
+        activeHookIdMap["id"] = 0;
+    }
+    
+    const activeHookId = activeHookIdMap["id"]++;
+    
+    if (!activeStateMapAlreadyCreated && !hookIdMapAlreadyCreated) {
+        activeStateMap[activeHookId] = initialState;
+    } else {
+        if (typeof activeStateMap[activeHookId] === "undefined") {
+            activeStateMap[activeHookId] = initialState;
+        }
+    }
+
+    const stateUpdater = function(newState) {
+        activeStateMap[activeHookId] = newState;
+        requestReRender(activeStateId);
+        setTimeout(function() {
+            requestReRender($$parentId, $$id);
+        }, 20);
+    };
+
+    return [activeStateMap[activeHookId], stateUpdater];
+}
+
+function createElement(nodeTypeOrFunction, props, ...children) {
+    let treeNode = {
+        $$id: `element-${ReactInnerContext.elementId++}`,
+        $$parentId: null,
+        type: nodeTypeOrFunction,
+        props: props || {},
+        children: null,
+        $$nativeElement: null // will be filled later
+    };
+
+    if (typeof nodeTypeOrFunction === "function") {
+        // thanks to single thread abilitiy of JS we can create
+        // id values for the hooks to use
+        ReactInnerContext.activeStateParent = treeNode;
+        treeNode.children = [nodeTypeOrFunction(props, children)];
+        applyParentToChildren(treeNode.children, treeNode.$$id);
+    } else {
+        if (children != null && children.length === 1 && typeof children[0] === "string") {
+            treeNode.props.__innerHTML = children[0];
+        } else {
+            if (children != null && children.length > 0) {
+                treeNode.children = children;
+                applyParentToChildren(treeNode.children, treeNode.$$id);
             }
         }
     }
-    
-    findElementById(elementId) {
-        let targetElement = null;
-        
-        for( let i = 0; i < this.renderTree.length; i++) {
-            let element = this.renderTree[i];
-            if (element.id == elementId) {
-                targetElement = element;
-                break;
+
+    return treeNode;
+}
+
+function applyParentToChildren(children, parentId) {
+    if (children != null && children.length > 0) {
+        children.forEach(child => {
+            if (child != null) {
+                child.$$parentId = parentId;
             }
-        }
-        
-        return targetElement;
-    }
-    
-    findElementIndexById(elementId) {
-        let targetElement = null;
-        
-        for( let i = 0; i < this.renderTree.length; i++) {
-            let element = this.renderTree[i];
-            if (element.id == elementId) {
-                return i;
-            }
-        }
-        
-        return -1;
+        });
     }
 }
 
-const simpleReactNativeEngineInstance = new SimpleReactNativeEngine();
-
-function RenderJSApp() {
-    console.log("JS: CreateReacNativeTree on JS");
-    
-    simpleReactNativeEngineInstance.initRenderTree();
-    
-    // Create the first button element
-    simpleReactNativeEngineInstance.createElement("Button", "Test Button", {clickCount: 0}, (targetElement) => {
-        targetElement.state.clickCount += 1;
-        targetElement.data = `Test Button 1 Clicked (${targetElement.state.clickCount})`;
-        
-        if (targetElement.state.clickCount === 5) {
-            simpleReactNativeEngineInstance.createElement("Text", "Test Text for 5th click", null, null);
-        }
-    });
-    
-    // Create the text element
-    const textElement = simpleReactNativeEngineInstance.createElement("Text", "Test Text", null, null);
-    
-    // Create the last button element
-    simpleReactNativeEngineInstance.createElement("Button", "Test Button", {clickCount: 0}, (targetElement) => {
-        targetElement.state.clickCount += 1;
-        targetElement.data = `Test Button 2 Clicked (${targetElement.state.clickCount})`;
-        
-        if (targetElement.state.clickCount === 5) {
-            simpleReactNativeEngineInstance.removeElement(textElement.id);
-        }
-    });
-    
-    console.log(JSON.stringify(simpleReactNativeEngineInstance.getRenderTree()));
-
-    requestNativeRender();
+function renderVirtualDom(virtualDomTree, rootDOMElement, replacePreviousRoot) {
+    ReactInnerContext.virtualDomTree = virtualDomTree;
+    ReactInnerContext.rootDOMElement = rootDOMElement;
+    ReactInnerContext.rootRenderer(virtualDomTree, rootDOMElement, replacePreviousRoot);
 }
 
-function HandleButtonClickEvent(elementId) {
-    console.log("JS: HandleButtonClickEvent on JS");
-    console.log("JS: elementId: " + elementId);
-
-    simpleReactNativeEngineInstance.invokeEventForTheElement(elementId);
-    
-    requestNativeRender();
+function createRoot(rootDOMElement) {
+    return {
+        render: function(virtualDomTree) {
+            resetReactContext();
+            renderVirtualDom(virtualDomTree, rootDOMElement);
+        }
+    };
 }
 
-function requestNativeRender() {
-    // This is not JSON based bridge!
+function findAndInvokeEventHandlerOfElement(elementNodeInVirtualDomTree, elementId, eventKey, evt) {
+    const elemNode = elementNodeInVirtualDomTree;
+    
+    if (elemNode === null) {
+        return;
+    }
+    
+    if (elemNode.$$id === elementId) {
+        elemNode.props?.events[eventKey]?.(evt);
+    } else {
+        if (elemNode.children) {
+            if (Array.isArray(elemNode.children)) {
+                elemNode.children.forEach((singleElement) => {
+                    findAndInvokeEventHandlerOfElement(singleElement, elementId, eventKey, evt);
+                });
+            } else {
+                findAndInvokeEventHandlerOfElement(elemNode.children, elementId, eventKey, evt);
+            }
+        }
+    }
+}
+
+/**
+ * BELOW 2 METHODS ARE USED FOR GLOBAL PURPOSES
+ */
+function __informNativeEvent(elementId, eventKey, evt) {
+    const {
+        virtualDomTree
+    } = ReactInnerContext;
+    findAndInvokeEventHandlerOfElement(virtualDomTree, elementId, eventKey, evt);
+}
+
+function __registerRootRenderer(rootRenderer) {
+    ReactInnerContext.rootRenderer = rootRenderer;
+}
+
+/**  simple.react.js END */
+/*****************************************************************************************************/
+/** React Native Renderer START */
+const ReactRenderContext = {};
+
+function doRenderRoot(virtualDomTree, rootDOMElement) {
     const nativeBridge = RNExampleBridge.getInstance();
-    const renderTree = simpleReactNativeEngineInstance.getRenderTree();
-    
-    // Start informing UI about the changes
     nativeBridge.resetNativeRenderTree()
-    
-    for (let i = 0; i < renderTree.length; i++) {
-        const element = renderTree[i];
-        nativeBridge.addToNativeRenderTree(element.type, element.id, element.data);
-    }
+
+    syncVirtualDomToNative(virtualDomTree.children);
 }
 
-console.log("JS: Hello World!!!")
+// simple tree traversal
+function syncVirtualDomToNative(node) {
+    if (node === null || typeof node === "undefined" || node.length === 0) {
+        return;
+    }
+
+    if (Array.isArray(node)) {
+        node.forEach((singleNode) => {
+            if (singleNode !== null) {
+                syncSingleNodeToNative(singleNode);
+                syncVirtualDomToNative(singleNode.children);
+            }
+        });
+    } else {
+        syncSingleNodeToNative(node);
+    }
+
+    syncVirtualDomToNative(node.children);
+}
+
+function syncSingleNodeToNative(singleNode) {
+    if (singleNode === null) {
+        return;
+    }
+    
+    const nativeBridge = RNExampleBridge.getInstance();
+    
+    let resolvedType = typeof singleNode.type === "function" ? "Function" : singleNode.type;
+    nativeBridge.addNodeToNativeTree(singleNode.$$parentId, singleNode.$$id, resolvedType, singleNode.props, null);
+}
+
+function __handleButtonClickEvent(elementId) {
+    __informNativeEvent(elementId, "click");
+}
+
+__registerRootRenderer(doRenderRoot);
+/** React Native Renderer END */
+
+/* Start of index.js **/
+
+function App() {
+  const [showDate, setShowDate] = useState(false);
+  const [labelCount, setLabelCount] = useState(2);
+  let labelItems = [];
+    
+  if (labelCount > 0) {
+      labelItems = [];
+      for (let i = 0; i < labelCount; i++) {
+          let renderedElement;
+          if (i % 5 === 0) {
+              renderedElement = createElement("Button", {
+                __innerHTML: `Button (${i})`,
+                events: {
+                  click: function() {
+                      setShowDate(i % 7 === 0);
+                      setLabelCount(i % 10 === 0 ? i + 2 : i - 1);
+                  }
+                }
+              });
+          } else {
+              renderedElement = createElement("Label", {
+              __innerHTML: `Label (${i})`
+              });
+          }
+          labelItems.push(renderedElement);
+      }
+  }
+    
+  return createElement(
+    "Button",
+    {
+      __innerHTML: showDate ? `Tayfun - ${new Date().getTime()}` : "Tayfun",
+      events: {
+        click: () => {
+          console.log("App.Button.click.labelCount: " + labelCount);
+          setShowDate(true);
+          setLabelCount(labelCount + 1);
+        }
+      }
+    },
+    ...labelItems
+  );
+}
+
+function __RenderJSApp() {
+    console.log("__RenderJSApp")
+    createRoot(null).render(createElement(App, null))
+}

@@ -15,30 +15,26 @@ struct RNViewSurface: View {
     var bridgeInstance: RNExampleBridge?
     
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundColor(.accentColor)
-            
-            Text("Test")
+        VStack (alignment: .leading) {
             
             List($renderTree, id: \.self) { (treeElement: Binding<RenderElement>) in
                 if (treeElement.wrappedValue.type == "Button") {
                     Button(action: {
-                        jsContext?.evaluateScript("HandleButtonClickEvent(" + treeElement.wrappedValue.id + ")")
+
+                        jsContext?.evaluateScript("__handleButtonClickEvent('" + treeElement.wrappedValue.id + "')")
                         
                         syncViewState()
                     }, label: {
-                        Text(treeElement.wrappedValue.data)
+                        Text(treeElement.wrappedValue.props["__innerHTML"] as! String);
                     })
                 } else {
-                    Text(treeElement.wrappedValue.data)
+                    Text(treeElement.wrappedValue.props["__innerHTML"] as! String);
                 }
             }
         }
         .padding()
         .onAppear {
-            jsContext?.evaluateScript("RenderJSApp()")
+            jsContext?.evaluateScript("__RenderJSApp()")
             
             syncViewState()
         }
@@ -50,8 +46,8 @@ struct RNViewSurface: View {
     func syncViewState() {
         renderTree.removeAll()
         
-        bridgeInstance?.nativeRenderTree.forEach({ treeElement in
-            renderTree.append(treeElement)
+        bridgeInstance?.nativeRenderTree.forEach({ treeNode in
+            renderTree.append(treeNode)
         })
     }
 }
