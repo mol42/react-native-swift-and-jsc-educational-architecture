@@ -34,7 +34,7 @@ struct RNViewSurface: View {
         }
         .padding()
         .onAppear {
-            jsContext?.evaluateScript("RenderJSApp()")
+            jsContext?.evaluateScript("__RenderJSApp()")
             
             syncViewState()
         }

@@ -234,6 +234,8 @@ function __handleButtonClickEvent(elementId) {
 __registerRootRenderer(doRenderRoot);
 /** React Native Renderer END */
 
+/* Start of index.js **/
+
 function App() {
   const [showDate, setShowDate] = useState(false);
   const [labelCount, setLabelCount] = useState(2);
@@ -278,7 +280,7 @@ function App() {
   );
 }
 
-function RenderJSApp() {
-    console.log("RenderJSApp")
+function __RenderJSApp() {
+    console.log("__RenderJSApp")
     createRoot(null).render(createElement(App, null))
 }

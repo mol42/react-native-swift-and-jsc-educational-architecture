@@ -93,6 +93,10 @@ struct ReactNativeBasicsApp: App {
     
     init() {
         let context = JSContext()
+        // JavascriptCore does not provide implementation for setTimeout, setInterval etc
+        // this is expected since JS Engines are merely a library that runs JS codebase
+        // and expects the Host environment to provide some functionality like setTimeout,
+        // XHTTPRequest etc
         TimerJS.registerInto(jsContext: context!)
 
         context?.exceptionHandler = { context, exception in

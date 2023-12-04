@@ -11,10 +11,7 @@ import JavaScriptCore
 var emptyFunction: () -> String = { return "" }
 
 struct RenderElement: Hashable, Equatable {
-    var identifier: String {
-        return UUID().uuidString
-    }
-    
+
     public func hash(into hasher: inout Hasher) {
         return hasher.combine(parentId + "_" + id + "_" + type)
     }
@@ -38,8 +35,6 @@ struct RenderElement: Hashable, Equatable {
 @objc protocol RNJSExports: JSExport {
     func resetNativeRenderTree()
     func addNodeToNativeTree(_ parentId: JSValue,_ id: JSValue, _ elementType: JSValue, _ props: JSValue)
-    // func printNativeTreeMap()
-    // func doRender()
     static func getInstance() -> RNExampleBridge
 }
 
