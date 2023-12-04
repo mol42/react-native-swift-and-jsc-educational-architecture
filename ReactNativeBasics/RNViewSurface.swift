@@ -16,23 +16,19 @@ struct RNViewSurface: View {
     
     var body: some View {
         VStack (alignment: .leading) {
-            ForEach($renderTree, id: \.self) { (treeElement: Binding<RenderElement>) in
-                
-                var log1 = print("treeElement.wrappedValue.type");
-                var log2 = print(treeElement.wrappedValue.type);
-                
+            
+            List($renderTree, id: \.self) { (treeElement: Binding<RenderElement>) in
                 if (treeElement.wrappedValue.type == "Button") {
                     Button(action: {
-                        jsContext?.evaluateScript("HandleButtonClickEvent(" + treeElement.wrappedValue.id + ")")
+                        print(treeElement.wrappedValue.id)
+                        jsContext?.evaluateScript("__handleButtonClickEvent('" + treeElement.wrappedValue.id + "')")
                         
                         syncViewState()
                     }, label: {
-                        let labelText: String = treeElement.wrappedValue.props["__innerHTML"] as! String;
-                        Text(labelText)
+                        Text(treeElement.wrappedValue.props["__innerHTML"] as! String);
                     })
-                } else if (treeElement.wrappedValue.type == "Label") {
-                    let labelText: String = treeElement.wrappedValue.props["__innerHTML"] as! String;
-                    Text(labelText)
+                } else {
+                    Text(treeElement.wrappedValue.props["__innerHTML"] as! String);
                 }
             }
         }
@@ -50,8 +46,8 @@ struct RNViewSurface: View {
     func syncViewState() {
         renderTree.removeAll()
         
-        bridgeInstance?.nativeRenderTree.forEach({ treeElement in
-            renderTree.append(treeElement)
+        bridgeInstance?.nativeRenderTree.forEach({ treeNode in
+            renderTree.append(treeNode)
         })
     }
 }
