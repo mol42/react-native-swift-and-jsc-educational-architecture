@@ -39,7 +39,7 @@ struct RenderElement: Hashable, Equatable {
     func resetNativeRenderTree()
     func addNodeToNativeTree(_ parentId: JSValue,_ id: JSValue, _ elementType: JSValue, _ props: JSValue)
     // func printNativeTreeMap()
-    func doRender()
+    // func doRender()
     static func getInstance() -> RNExampleBridge
 }
 
@@ -72,11 +72,8 @@ class RNExampleBridge: NSObject, RNJSExports {
         print("SWIFT: nodeElement.data: " + nodeElement.props.keys.description)
         print("---------------")
         
+        // Due to SwiftUI state management whatever added will be re-rendered
         self.nativeRenderTree.append(nodeElement);
-    }
-    
-    public func doRender() {
-        print(self.nativeRenderTree);
     }
     
     class func getInstance() -> RNExampleBridge {

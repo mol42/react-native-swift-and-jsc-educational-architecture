@@ -21,16 +21,30 @@ const ReactInnerContext = {
     activeId: null,
     stateMap: {},
     hookIdMap: {},
+    activeTreeNode: null,
     virtualDomTree: null
 };
 
 const Fragment = "fragment";
 
+function resetReactContext() {
+    ReactInnerContext.elementId = 0;
+    ReactInnerContext.hookIdMap = {};
+    ReactInnerContext.activeStateParent = null;
+}
+
 function requestReRender(elementId) {
+    
+    resetReactContext();
+    
     const existingDomTree = ReactInnerContext.virtualDomTree;
     // our framework expects function that creates the
     // virtual dom tree
     const newVirtualDomTree = createElement(existingDomTree.type);
+    console.log("--------")
+    console.log("newVirtualDomTree");
+    console.log(JSON.stringify(newVirtualDomTree))
+    console.log("--------")
     renderVirtualDom(newVirtualDomTree, ReactInnerContext.rootDOMElement, true);
 }
 
@@ -50,16 +64,21 @@ function createOrGetMap(map, activeElementId) {
 }
 
 function useState(initialState) {
-    const activeElementId = ReactInnerContext.activeId;
-    const [hookIdMapAlreadyCreated, activeHookIdMap] = createOrGetMap(ReactInnerContext.hookIdMap, activeElementId);
-    const [activeStateMapAlreadyCreated, activeStateMap] = createOrGetMap(ReactInnerContext.stateMap, activeElementId);
-
+    const { $$id, $$parentId } = ReactInnerContext.activeStateParent;
+    const activeStateId = $$parentId || "NULL";
+    const [hookIdMapAlreadyCreated, activeHookIdMap] = createOrGetMap(ReactInnerContext.hookIdMap, activeStateId);
+    const [activeStateMapAlreadyCreated, activeStateMap] = createOrGetMap(ReactInnerContext.stateMap, activeStateId);
+    
     if (!hookIdMapAlreadyCreated) {
-        activeHookIdMap[activeElementId] = 0;
+        activeHookIdMap["id"] = 0;
     }
-    const activeHookId = activeHookIdMap[activeElementId]++;
-
-    if (!activeStateMapAlreadyCreated) {
+    const activeHookId = activeHookIdMap["id"]++;
+    
+    console.log("$$id, $$parentId: " + $$id + ", " + $$parentId);
+    console.log("activeStateMapAlreadyCreated:" + activeStateMapAlreadyCreated);
+    console.log("activeStateMap[activeHookId]:" + activeStateMap[activeHookId]);
+    
+    if (!activeStateMapAlreadyCreated && !hookIdMapAlreadyCreated) {
         activeStateMap[activeHookId] = initialState;
     } else {
         if (typeof activeStateMap[activeHookId] === "undefined") {
@@ -68,11 +87,15 @@ function useState(initialState) {
     }
 
     const stateUpdater = function(newState) {
+        console.log("activeStateMap[activeHookId]: " + activeStateMap[activeHookId] + " newState: " + newState)
         activeStateMap[activeHookId] = newState;
+        requestReRender(activeStateId);
         setTimeout(function() {
-            requestReRender(activeElementId);
-        }, 50);
+            requestReRender($$parentId, $$id);
+        }, 20);
     };
+    
+    console.log("activeStateMap: " + JSON.stringify(activeStateMap));
 
     return [activeStateMap[activeHookId], stateUpdater];
 }
@@ -90,7 +113,7 @@ function createElement(nodeTypeOrFunction, props, ...children) {
     if (typeof nodeTypeOrFunction === "function") {
         // thanks to single thread abilitiy of JS we can create
         // id values for the hooks to use
-        ReactInnerContext.activeId = treeNode.$$id;
+        ReactInnerContext.activeStateParent = treeNode;
         treeNode.children = [nodeTypeOrFunction(props, children)];
         applyParentToChildren(treeNode.children, treeNode.$$id);
     } else {
@@ -110,16 +133,14 @@ function createElement(nodeTypeOrFunction, props, ...children) {
 function applyParentToChildren(children, parentId) {
     if (children != null && children.length > 0) {
         children.forEach(child => {
-            child.$$parentId = parentId;
+            if (child != null) {
+                child.$$parentId = parentId;
+            }
         });
     }
 }
 
 function renderVirtualDom(virtualDomTree, rootDOMElement, replacePreviousRoot) {
-    ReactInnerContext.activeId = -1;
-    ReactInnerContext.elementId = 0;
-    ReactInnerContext.hookIdMap = {};
-
     ReactInnerContext.virtualDomTree = virtualDomTree;
     ReactInnerContext.rootDOMElement = rootDOMElement;
     ReactInnerContext.rootRenderer(virtualDomTree, rootDOMElement, replacePreviousRoot);
@@ -130,6 +151,7 @@ function createRoot(rootDOMElement) {
         render: function(virtualDomTree) {
             console.log("virtualDomTree");
             console.log(JSON.stringify(virtualDomTree));
+            resetReactContext();
             renderVirtualDom(virtualDomTree, rootDOMElement);
         }
     };
@@ -138,11 +160,10 @@ function createRoot(rootDOMElement) {
 function findAndInvokeEventHandlerOfElement(elementNodeInVirtualDomTree, elementId, eventKey, evt) {
     const elemNode = elementNodeInVirtualDomTree;
     
-    console.log("findAndInvokeEventHandlerOfElement")
-    console.log(elemNode.$$id)
-    console.log(elementId)
-    console.log("")
-
+    if (elemNode === null) {
+        return;
+    }
+    
     if (elemNode.$$id === elementId) {
         elemNode.props?.events[eventKey]?.(evt);
     } else {
@@ -180,10 +201,7 @@ function doRenderRoot(virtualDomTree, rootDOMElement) {
     const nativeBridge = RNExampleBridge.getInstance();
     nativeBridge.resetNativeRenderTree()
 
-    syncVirtualDomToNative(virtualDomTree);
-
-    // nativeBridge.printNativeTreeMap();
-    nativeBridge.doRender()
+    syncVirtualDomToNative(virtualDomTree.children);
 }
 
 // simple tree traversal
@@ -194,8 +212,10 @@ function syncVirtualDomToNative(node) {
 
     if (Array.isArray(node)) {
         node.forEach((singleNode) => {
-            syncSingleNodeToNative(singleNode);
-            syncVirtualDomToNative(singleNode.children);
+            if (singleNode !== null) {
+                syncSingleNodeToNative(singleNode);
+                syncVirtualDomToNative(singleNode.children);
+            }
         });
     } else {
         syncSingleNodeToNative(node);
@@ -205,8 +225,12 @@ function syncVirtualDomToNative(node) {
 }
 
 function syncSingleNodeToNative(singleNode) {
+    if (singleNode === null) {
+        return;
+    }
+    
     const nativeBridge = RNExampleBridge.getInstance();
-
+    
     let resolvedType = typeof singleNode.type === "function" ? "Function" : singleNode.type;
     nativeBridge.addNodeToNativeTree(singleNode.$$parentId, singleNode.$$id, resolvedType, singleNode.props, null);
 }
@@ -223,35 +247,54 @@ function __handleButtonClickEvent(elementId) {
 __registerRootRenderer(doRenderRoot);
 /** React Native Renderer END */
 
-/*
 function App() {
-    return createElement(
-        "Fragment", {},
-        createElement(
-            "Button", {
-                __innerHTML: "Tayfun"
-            }
-        ),
-        createElement(
-            "Label", {
-                __innerHTML: "Tayfun 2"
-            }
-        )
-    )
+  const [showDate, setShowDate] = useState(false);
+  const [labelCount, setLabelCount] = useState(2);
+  let labelItems = [];
+    
+  if (labelCount > 0) {
+      labelItems = [];
+      for (let i = 0; i < labelCount; i++) {
+          let renderedElement;
+          if (i % 5 === 0) {
+              renderedElement = createElement("Button", {
+                __innerHTML: `Button (${i})`,
+                events: {
+                  click: function() {
+                      setShowDate(i % 7 === 0);
+                      setLabelCount(i % 10 === 0 ? i + 2 : i - 1);
+                  }
+                }
+              });
+          } else {
+              renderedElement = createElement("Label", {
+              __innerHTML: `Label (${i})`
+              });
+          }
+          labelItems.push(renderedElement);
+      }
+  }
+    
+    console.log("labelCount: " + labelCount)
+    console.log("labelItems: " + JSON.stringify(labelItems))
+    
+  return createElement(
+    "Button",
+    {
+      __innerHTML: showDate ? `Tayfun - ${new Date().getTime()}` : "Tayfun",
+      events: {
+        click: () => {
+          console.log("App.Button.click.labelCount: " + labelCount);
+          setShowDate(true);
+          setLabelCount(labelCount + 1);
+        }
+      }
+    },
+    ...labelItems
+  );
 }
-*/
 
 function RenderJSApp() {
     console.log("RenderJSApp")
-    createRoot(null).render(createElement(
-            "Button", {
-                __innerHTML: "Tayfun",
-                events: {
-                    click: () => {
-                        console.log("Button clicked");
-                    }
-                }
-            }
-        )
-    )
+    createRoot(null).render(createElement(App, null))
 }

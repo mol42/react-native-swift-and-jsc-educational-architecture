@@ -20,7 +20,7 @@ struct RNViewSurface: View {
             List($renderTree, id: \.self) { (treeElement: Binding<RenderElement>) in
                 if (treeElement.wrappedValue.type == "Button") {
                     Button(action: {
-                        print(treeElement.wrappedValue.id)
+
                         jsContext?.evaluateScript("__handleButtonClickEvent('" + treeElement.wrappedValue.id + "')")
                         
                         syncViewState()
