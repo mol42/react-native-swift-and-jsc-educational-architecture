@@ -42,7 +42,8 @@ function requestReRender(parentId, elementId) {
   const existingDomTree = ReactInnerContext.virtualDomTree;
   // our framework expects function that creates the
   // virtual dom tree
-  const newVirtualDomTree = createElement(existingDomTree.type, existingDomTree.props, existingDomTree.children);
+  const { type, props, children } = existingDomTree;
+  const newVirtualDomTree = createElement(type, props, children);
   renderVirtualDom(newVirtualDomTree, ReactInnerContext.rootDOMElement, true);
 }
 
@@ -93,9 +94,6 @@ function useState(initialState) {
   const stateUpdater = function (newState) {
     activeStateMap[activeHookId] = newState;
     requestReRender($$parentId, $$id);
-    setTimeout(function () {
-      requestReRender($$parentId, $$id);
-    }, 20);
   };
 
   return [activeStateMap[activeHookId], stateUpdater];

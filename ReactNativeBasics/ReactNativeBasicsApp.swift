@@ -93,21 +93,29 @@ struct ReactNativeBasicsApp: App {
     
     init() {
         let context = JSContext()
+        // Javascript Engines are very light libraries that can run JS code and expects
+        // some functionalities to be provided by the host system
+        // for example HTTP request, console.log's, setTimeout, setInterval etc are
+        // all needs to be provided by the host system
         // JavascriptCore does not provide implementation for setTimeout, setInterval etc
         // this is expected since JS Engines are merely a library that runs JS codebase
         // and expects the Host environment to provide some functionality like setTimeout,
         // XHTTPRequest etc
-        TimerJS.registerInto(jsContext: context!)
-
-        context?.exceptionHandler = { context, exception in
-            print("JS Error: \(exception!)") // Do not use force unwrap `!`
-        }
         
+        // -- Configura timer related host integrations
+        TimerJS.registerInto(jsContext: context!)
+        
+        // -- Configura console.log host integration
         let consoleLog: @convention(block) (String) -> Void = {message in
           print(message)
         }
         
         context?.setObject(consoleLog, forKeyedSubscript: "_consoleLog" as NSString)
+
+        // --- Configure exception handler
+        context?.exceptionHandler = { context, exception in
+            print("JS Error: \(exception!)") // Do not use force unwrap `!`
+        }
 
         guard let path = Bundle.main.path(forResource: "index", ofType: "js"),
           let script = try? String(contentsOfFile: path, encoding: .utf8) else {

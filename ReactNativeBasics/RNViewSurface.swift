@@ -16,7 +16,6 @@ struct RNViewSurface: View {
     
     var body: some View {
         VStack (alignment: .leading) {
-            
             List($renderTree, id: \.self) { (treeElement: Binding<RenderElement>) in
                 if (treeElement.wrappedValue.type == "Button") {
                     Button(action: {
@@ -32,8 +31,9 @@ struct RNViewSurface: View {
         }
         .padding()
         .onAppear {
+            // We are starting RN render after Native Render Surface is created to prevent
+            // any problem regarding the race conditions
             jsContext?.evaluateScript("__RenderJSApp()")
-            
             syncViewState()
         }
     }
@@ -43,7 +43,6 @@ struct RNViewSurface: View {
      */
     func syncViewState() {
         renderTree.removeAll()
-        
         bridgeInstance?.nativeRenderTree.forEach({ treeNode in
             renderTree.append(treeNode)
         })
