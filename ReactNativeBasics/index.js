@@ -19,7 +19,7 @@ var console = {
 
 /*****************************************************************************************************/
 
-/**  simple-react.js START */
+/**  simple-modular-react.js START */
 const ReactInnerContext = {
   elementId: 0,
   activeId: null,
@@ -37,12 +37,12 @@ function resetReactContext() {
   ReactInnerContext.activeStateContext = null;
 }
 
-function requestReRender(elementId) {
+function requestReRender(parentId, elementId) {
   resetReactContext();
   const existingDomTree = ReactInnerContext.virtualDomTree;
   // our framework expects function that creates the
   // virtual dom tree
-  const newVirtualDomTree = createElement(existingDomTree.type);
+  const newVirtualDomTree = createElement(existingDomTree.type, existingDomTree.props, existingDomTree.children);
   renderVirtualDom(newVirtualDomTree, ReactInnerContext.rootDOMElement, true);
 }
 
@@ -92,7 +92,7 @@ function useState(initialState) {
 
   const stateUpdater = function (newState) {
     activeStateMap[activeHookId] = newState;
-    requestReRender(activeStateId);
+    requestReRender($$parentId, $$id);
     setTimeout(function () {
       requestReRender($$parentId, $$id);
     }, 20);
@@ -195,9 +195,7 @@ function __registerRootRenderer(rootRenderer) {
   ReactInnerContext.rootRenderer = rootRenderer;
 }
 
-console.log("Modular React is initialized");
-
-/**  simple.react.js END */
+/**  simple-modular-react.js END */
 /*****************************************************************************************************/
 /** React Native Renderer START */
 const ReactRenderContext = {};
@@ -248,52 +246,61 @@ __registerRootRenderer(doRenderRoot);
 /** React Native Renderer END */
 
 /* Start of index.js **/
+function App({
+    appName
+}) {
+    const [showDate, setShowDate] = useState(false);
+    const [labelCount, setLabelCount] = useState(2);
+    let labelItems = [];
+    
+    labelItems.push(createElement("Label", {
+        __innerHTML: `App Name : ${appName}`
+    }))
 
-function App() {
-  const [showDate, setShowDate] = useState(false);
-  const [labelCount, setLabelCount] = useState(2);
-  let labelItems = [];
-    
-  if (labelCount > 0) {
-      labelItems = [];
-      for (let i = 0; i < labelCount; i++) {
-          let renderedElement;
-          if (i % 5 === 0) {
-              renderedElement = createElement("Button", {
-                __innerHTML: `Button (${i})`,
-                events: {
-                  click: function() {
-                      setShowDate(i % 7 === 0);
-                      setLabelCount(i % 10 === 0 ? i + 2 : i - 1);
-                  }
+    labelItems.push(createElement(
+        "Button", {
+            __innerHTML: showDate ? `Tayfun - ${new Date().getTime()}` : "Tayfun",
+            events: {
+                click: () => {
+                    setShowDate(true);
+                    setLabelCount(labelCount + 1);
                 }
-              });
-          } else {
-              renderedElement = createElement("Label", {
-              __innerHTML: `Label (${i})`
-              });
-          }
-          labelItems.push(renderedElement);
-      }
-  }
-    
-  return createElement(
-    "Button",
-    {
-      __innerHTML: showDate ? `Tayfun - ${new Date().getTime()}` : "Tayfun",
-      events: {
-        click: () => {
-          console.log("App.Button.click.labelCount: " + labelCount);
-          setShowDate(true);
-          setLabelCount(labelCount + 1);
+            }
         }
-      }
-    },
-    ...labelItems
-  );
+    ))
+
+    if (labelCount > 0) {
+        labelItems.splice(2);
+        for (let i = 0; i < labelCount; i++) {
+            let renderedElement;
+            if (i % 5 === 0) {
+                renderedElement = createElement("Button", {
+                    __innerHTML: `Button (${i})`,
+                    events: {
+                        click: function() {
+                            setShowDate(i % 7 === 0);
+                            setLabelCount(i - 2);
+                        }
+                    }
+                });
+            } else {
+                renderedElement = createElement("Label", {
+                    __innerHTML: `Label (${i})`
+                });
+            }
+            labelItems.push(renderedElement);
+        }
+    }
+
+    return createElement(
+        "Fragment", {},
+        ...labelItems
+    );
 }
 
 function __RenderJSApp() {
     console.log("__RenderJSApp")
-    createRoot(null).render(createElement(App, null))
+    createRoot(null).render(createElement(App, {
+        appName: "RN App"
+    }))
 }

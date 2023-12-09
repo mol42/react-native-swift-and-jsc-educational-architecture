@@ -20,14 +20,12 @@ struct RNViewSurface: View {
             List($renderTree, id: \.self) { (treeElement: Binding<RenderElement>) in
                 if (treeElement.wrappedValue.type == "Button") {
                     Button(action: {
-
                         jsContext?.evaluateScript("__handleButtonClickEvent('" + treeElement.wrappedValue.id + "')")
-                        
                         syncViewState()
                     }, label: {
                         Text(treeElement.wrappedValue.props["__innerHTML"] as! String);
                     })
-                } else {
+                } else if (treeElement.wrappedValue.type == "Label") {
                     Text(treeElement.wrappedValue.props["__innerHTML"] as! String);
                 }
             }
