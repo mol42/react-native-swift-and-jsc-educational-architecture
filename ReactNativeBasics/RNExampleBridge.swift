@@ -10,6 +10,8 @@ import JavaScriptCore
 
 var emptyFunction: () -> String = { return "" }
 
+// A single node element holder object that represents
+// nodes of the native side render tree
 struct RenderElement: Hashable, Equatable {
 
     public func hash(into hasher: inout Hasher) {
@@ -32,6 +34,7 @@ struct RenderElement: Hashable, Equatable {
     var children: [RenderElement];
 }
 
+// The definition object that is needed to export a Swift class to JS side
 @objc protocol RNJSExports: JSExport {
     func resetNativeRenderTree()
     func addNodeToNativeTree(_ parentId: JSValue,_ id: JSValue, _ elementType: JSValue, _ props: JSValue)
